@@ -128,35 +128,52 @@ async def webhook(
         current_node_id = db.get_user_state(user_id)
         current_node = flow.get_node(current_node_id)
         
-        # 如果題號不存在（可能已結束或錯誤），從頭開始
+        # 如果題號不存在，從頭開始
         if not current_node:
             current_node_id = flow.get_start_node()
             current_node = flow.get_node(current_node_id)
         
-        # 2. 判定用戶回答意圖
-        intent = intent_classifier.classify(user_input, current_node)
+        # 確保 current_node 存在
+        if not current_node:
+            return {"status": "error", "message": "Flow not loaded"}
         
-        # 3. 決定下一題
-        next_node_id = flow.get_next_node(current_node, intent, user_input)
-        next_node = flow.get_node(next_node_id) if next_node_id else None
+        # 檢查是否為新用戶（還沒有對話記錄）
+        user_logs = db.get_user_logs(user_id)
+        is_new_user = len(user_logs) == 0
         
-        # 4. 組合回覆訊息（問題 + 衛教文字）
-        if next_node:
-            replies = flow.build_reply(next_node)
-            is_end = next_node.get("is_end", False)
-            tags = next_node.get("tags", {})
+        if is_new_user:
+            # 新用戶：顯示第一題（還沒回答，不跳轉）
+            replies = flow.build_reply(current_node)
+            is_end = current_node.get("is_end", False)
+            tags = current_node.get("tags", {})
             symptom_code = tags.get("code", "")
             action_tag = tags.get("action_tag", "")
-            prompt = next_node.get("prompt", "")
-            education = next_node.get("education_text", "")
+            prompt = current_node.get("prompt", "")
+            education = current_node.get("education_text", "")
+            intent = "new_user"
+            next_node_id = current_node_id  # 保持在同一題，等待回答
         else:
-            # 流程結束
-            replies = ["問卷已完成，感謝您的配合！"]
-            is_end = True
-            symptom_code = ""
-            action_tag = ""
-            prompt = ""
-            education = ""
+            # 已有記錄的用戶：根據回答跳到下一題
+            intent = intent_classifier.classify(user_input, current_node)
+            next_node_id = flow.get_next_node(current_node, intent, user_input)
+            next_node = flow.get_node(next_node_id) if next_node_id else None
+            
+            if next_node:
+                replies = flow.build_reply(next_node)
+                is_end = next_node.get("is_end", False)
+                tags = next_node.get("tags", {})
+                symptom_code = tags.get("code", "")
+                action_tag = tags.get("action_tag", "")
+                prompt = next_node.get("prompt", "")
+                education = next_node.get("education_text", "")
+            else:
+                # 流程結束
+                replies = ["問卷已完成，感謝您的配合！"]
+                is_end = True
+                symptom_code = ""
+                action_tag = ""
+                prompt = ""
+                education = ""
         
         # 5. 記錄完整對話資訊（含症狀代碼、行動方向）
         db.log_message(
