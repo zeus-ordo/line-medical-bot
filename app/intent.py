@@ -5,7 +5,6 @@
 import os
 import re
 from typing import Dict, Any, Optional
-import openai
 
 class IntentClassifier:
     """
@@ -86,6 +85,8 @@ class IntentClassifier:
     ) -> str:
         """OpenAI 兜底判定"""
         try:
+            import openai
+            
             choices_info = ""
             if node and node.get("choices"):
                 choices_text = ", ".join([c["key"] for c in node["choices"]])
@@ -102,8 +103,9 @@ class IntentClassifier:
 
 只回傳結果，不要解釋："""
             
-            client = openai.OpenAI(api_key=self.api_key)
-            response = client.chat.completions.create(
+            # 使用舊版 API 方式（兼容性更好）
+            openai.api_key = self.api_key
+            response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "你是意圖分類助手，只回傳單一詞。"},

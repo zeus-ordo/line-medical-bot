@@ -61,7 +61,7 @@ class Database:
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS user_surveys (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id TEXT NOT NULL,
+                user_id TEXT NOT NULL UNIQUE,    -- 添加 UNIQUE 約束
                 survey_data TEXT,                -- JSON 格式儲存所有回答
                 final_action TEXT,               -- 最終建議行動
                 completed BOOLEAN DEFAULT 0,     -- 是否完成
