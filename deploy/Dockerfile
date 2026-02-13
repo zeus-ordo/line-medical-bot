@@ -9,6 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 複製程式碼
 COPY app/ ./app/
 COPY data/ ./data/
+COPY static/ ./static/
 
 # 建立資料目錄
 RUN mkdir -p data
