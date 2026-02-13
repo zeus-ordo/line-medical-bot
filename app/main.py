@@ -80,6 +80,15 @@ def validate_signature(body: bytes, signature: str) -> bool:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """啟動時初始化"""
+    # 檢查是否需要重置資料庫（環境變數 RESET_DB=true）
+    reset_db = os.getenv("RESET_DB", "false").lower() == "true"
+    if reset_db:
+        print("🔄 檢測到 RESET_DB=true，正在重置資料庫...")
+        db_path = os.path.join(os.path.dirname(__file__), "..", "data", "bot.db")
+        if os.path.exists(db_path):
+            os.remove(db_path)
+            print("✅ 舊資料庫已刪除")
+    
     db.init_db()
     flow.load()
     print(f"✅ 流程載入完成：共 {len(flow.nodes)} 個節點")
