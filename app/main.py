@@ -107,10 +107,20 @@ async def webhook(
             continue
         if event.get("message", {}).get("type") != "text":
             continue
+        
+        # 安全獲取用戶資訊
+        source = event.get("source", {})
+        user_id = source.get("user_id")
+        if not user_id:
+            print(f"Warning: No user_id in event source: {source}")
+            continue
             
-        user_id = event["source"]["user_id"]
-        user_input = event["message"]["text"]
-        reply_token = event["replyToken"]
+        user_input = event.get("message", {}).get("text", "")
+        reply_token = event.get("replyToken", "")
+        
+        if not reply_token:
+            print(f"Warning: No reply_token in event")
+            continue
         
         # ===== 問診流程處理 =====
         
