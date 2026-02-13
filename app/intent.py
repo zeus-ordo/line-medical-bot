@@ -1,10 +1,11 @@
 """
 最簡版意圖分類器
-規則判定為主，OpenAI 兜底
+規則判定為主，OpenAI 兜底（支援 openai>=1.0.0）
 """
 import os
 import re
 from typing import Dict, Any, Optional
+
 
 class IntentClassifier:
     """
@@ -15,6 +16,19 @@ class IntentClassifier:
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY", "")
         self.use_openai = bool(self.api_key)
+        self._client = None
+    
+    def _get_client(self):
+        """延遲初始化 OpenAI 客戶端"""
+        if self._client is None and self.use_openai:
+            try:
+                from openai import OpenAI
+                self._client = OpenAI(api_key=self.api_key)
+            except ImportError:
+                import openai
+                openai.api_key = self.api_key
+                self._client = "legacy"
+        return self._client
     
     def classify(
         self, 
@@ -58,7 +72,7 @@ class IntentClassifier:
         
         # 數字選擇
         if re.match(r"^(\d+)$", text):
-            return text  # 回傳數字作為 choice key
+            return text
         
         return None
     
@@ -68,11 +82,9 @@ class IntentClassifier:
             key = choice.get("key", "").lower()
             label = choice.get("label", "").lower()
             
-            # 精確匹配
             if text == key or text == label:
                 return key
             
-            # 包含匹配
             if text in label or label in text:
                 return key
         
@@ -85,7 +97,9 @@ class IntentClassifier:
     ) -> str:
         """OpenAI 兜底判定"""
         try:
-            import openai
+            client = self._get_client()
+            if not client:
+                return "unknown"
             
             choices_info = ""
             if node and node.get("choices"):
@@ -103,9 +117,8 @@ class IntentClassifier:
 
 只回傳結果，不要解釋："""
             
-            # 使用舊版 API 方式（兼容性更好）
-            openai.api_key = self.api_key
-            response = openai.ChatCompletion.create(
+            # 新版 API (>=1.0.0)
+            response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "你是意圖分類助手，只回傳單一詞。"},
@@ -114,7 +127,6 @@ class IntentClassifier:
                 max_tokens=10,
                 temperature=0
             )
-            
             result = response.choices[0].message.content.strip().lower()
             
             # 驗證回傳值
@@ -122,7 +134,6 @@ class IntentClassifier:
             if result in valid:
                 return result
             
-            # 檢查是否為選項
             if node and node.get("choices"):
                 for choice in node["choices"]:
                     if result == choice["key"].lower():
