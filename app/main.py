@@ -100,12 +100,29 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="LINE 醫療問診 Bot", lifespan=lifespan)
 
 # 掛載靜態文件（後台管理頁面）
-static_path = os.path.join(os.path.dirname(__file__), "..", "static")
-app.mount("/static", StaticFiles(directory=static_path), name="static")
-print(f"📁 Static path: {static_path}")
-print(f"📁 Static exists: {os.path.exists(static_path)}")
-if os.path.exists(static_path):
-    print(f"📁 Static files: {os.listdir(static_path)}")
+# 嘗試多個可能的路徑
+possible_static_paths = [
+    os.path.join(os.path.dirname(__file__), "..", "static"),  # 本地開發
+    "/app/static",  # Docker 容器內
+    os.path.join(os.getcwd(), "static"),  # 當前工作目錄
+]
+
+static_path = None
+for path in possible_static_paths:
+    print(f"🔍 Checking static path: {path}")
+    if os.path.exists(path):
+        static_path = path
+        print(f"✅ Found static at: {path}")
+        print(f"📁 Contents: {os.listdir(path)}")
+        break
+
+if static_path:
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
+else:
+    print("❌ Static directory not found in any location!")
+    # 列出 /app 目錄內容以便除錯
+    if os.path.exists("/app"):
+        print(f"📁 /app contents: {os.listdir('/app')}")
 
 @app.post("/webhook")
 async def webhook(
@@ -296,21 +313,22 @@ async def get_user_logs(user_id: str):
 @app.get("/admin", response_class=FileResponse)
 async def admin_dashboard():
     """後台管理頁面"""
-    admin_html_path = os.path.join(os.path.dirname(__file__), "..", "static", "admin.html")
-    print(f"🔍 Looking for admin.html at: {admin_html_path}")
-    print(f"🔍 File exists: {os.path.exists(admin_html_path)}")
-    if not os.path.exists(admin_html_path):
-        # 如果找不到，列出 static 目录内容
-        static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
-        if os.path.exists(static_dir):
-            print(f"📁 Static dir contents: {os.listdir(static_dir)}")
-        else:
-            print(f"❌ Static dir not found: {static_dir}")
-            # 列出 /app 目录
-            app_dir = os.path.join(os.path.dirname(__file__), "..")
-            if os.path.exists(app_dir):
-                print(f"📁 App dir contents: {os.listdir(app_dir)}")
-    return admin_html_path
+    # 嘗試多個可能的路徑
+    possible_paths = [
+        os.path.join(os.path.dirname(__file__), "..", "static", "admin.html"),
+        "/app/static/admin.html",
+        os.path.join(os.getcwd(), "static", "admin.html"),
+    ]
+    
+    for admin_html_path in possible_paths:
+        print(f"🔍 Looking for admin.html at: {admin_html_path}")
+        if os.path.exists(admin_html_path):
+            print(f"✅ Found admin.html at: {admin_html_path}")
+            return admin_html_path
+    
+    # 如果都找不到，返回錯誤信息
+    print("❌ admin.html not found in any location!")
+    raise HTTPException(status_code=404, detail=f"Admin page not found. Searched: {possible_paths}")
 
 @app.get("/api/admin/stats")
 async def admin_stats():
