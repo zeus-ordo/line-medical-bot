@@ -101,8 +101,11 @@ app = FastAPI(title="LINE 醫療問診 Bot", lifespan=lifespan)
 
 # 掛載靜態文件（後台管理頁面）
 static_path = os.path.join(os.path.dirname(__file__), "..", "static")
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+print(f"📁 Static path: {static_path}")
+print(f"📁 Static exists: {os.path.exists(static_path)}")
 if os.path.exists(static_path):
-    app.mount("/static", StaticFiles(directory=static_path), name="static")
+    print(f"📁 Static files: {os.listdir(static_path)}")
 
 @app.post("/webhook")
 async def webhook(
@@ -294,9 +297,20 @@ async def get_user_logs(user_id: str):
 async def admin_dashboard():
     """後台管理頁面"""
     admin_html_path = os.path.join(os.path.dirname(__file__), "..", "static", "admin.html")
-    if os.path.exists(admin_html_path):
-        return admin_html_path
-    raise HTTPException(status_code=404, detail="Admin page not found")
+    print(f"🔍 Looking for admin.html at: {admin_html_path}")
+    print(f"🔍 File exists: {os.path.exists(admin_html_path)}")
+    if not os.path.exists(admin_html_path):
+        # 如果找不到，列出 static 目录内容
+        static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+        if os.path.exists(static_dir):
+            print(f"📁 Static dir contents: {os.listdir(static_dir)}")
+        else:
+            print(f"❌ Static dir not found: {static_dir}")
+            # 列出 /app 目录
+            app_dir = os.path.join(os.path.dirname(__file__), "..")
+            if os.path.exists(app_dir):
+                print(f"📁 App dir contents: {os.listdir(app_dir)}")
+    return admin_html_path
 
 @app.get("/api/admin/stats")
 async def admin_stats():
