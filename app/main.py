@@ -110,9 +110,9 @@ async def webhook(
         
         # 安全獲取用戶資訊
         source = event.get("source", {})
-        user_id = source.get("user_id")
+        user_id = source.get("userId")  # LINE 使用 userId（駝峰命名）
         if not user_id:
-            print(f"Warning: No user_id in event source: {source}")
+            print(f"Warning: No userId in event source: {source}")
             continue
             
         user_input = event.get("message", {}).get("text", "")
