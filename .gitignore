@@ -1,0 +1,26 @@
+# 忽略敏感檔案
+.env
+*.db
+*.sqlite3
+
+# 忽略 Python 快取
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 忽略虛擬環境
+venv/
+env/
+ENV/
+
+# 忽略 IDE 設定
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 忽略系統檔案
+.DS_Store
+Thumbs.db
