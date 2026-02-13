@@ -13,7 +13,8 @@ from typing import Optional
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Header, HTTPException
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import requests
 from dotenv import load_dotenv
 
@@ -97,6 +98,11 @@ async def lifespan(app: FastAPI):
     db.close()
 
 app = FastAPI(title="LINE 醫療問診 Bot", lifespan=lifespan)
+
+# 掛載靜態文件（後台管理頁面）
+static_path = os.path.join(os.path.dirname(__file__), "..", "static")
+if os.path.exists(static_path):
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 @app.post("/webhook")
 async def webhook(
@@ -280,6 +286,47 @@ async def get_user_logs(user_id: str):
         "user_id": user_id,
         "total_records": len(logs),
         "logs": logs
+    }
+
+# ========== 後台管理頁面 ==========
+
+@app.get("/admin", response_class=FileResponse)
+async def admin_dashboard():
+    """後台管理頁面"""
+    admin_html_path = os.path.join(os.path.dirname(__file__), "..", "static", "admin.html")
+    if os.path.exists(admin_html_path):
+        return admin_html_path
+    raise HTTPException(status_code=404, detail="Admin page not found")
+
+@app.get("/api/admin/stats")
+async def admin_stats():
+    """後台統計數據 API"""
+    logs = db.get_all_logs()
+    
+    # 計算統計數據
+    total_users = len(set([log["user_id"] for log in logs if log.get("user_id")]))
+    
+    # 今日對話數
+    today = datetime.now().strftime("%Y-%m-%d")
+    today_chats = len([log for log in logs if log.get("created_at", "").startswith(today)])
+    
+    # 完成問卷數（is_end = True）
+    completed_surveys = len([log for log in logs if log.get("is_end") == 1])
+    
+    # 平均對話輪數
+    user_chat_counts = {}
+    for log in logs:
+        user_id = log.get("user_id")
+        if user_id:
+            user_chat_counts[user_id] = user_chat_counts.get(user_id, 0) + 1
+    avg_rounds = round(sum(user_chat_counts.values()) / len(user_chat_counts), 1) if user_chat_counts else 0
+    
+    return {
+        "total_users": total_users,
+        "today_chats": today_chats,
+        "completed_surveys": completed_surveys,
+        "avg_rounds": avg_rounds,
+        "logs": logs[:100]  # 只返回最近 100 筆，避免資料過大
     }
 
 if __name__ == "__main__":

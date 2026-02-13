@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTI 問診 Bot 後台管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .actions {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-right: 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .filters {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .filters input, .filters select {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .filters input:focus, .filters select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        .badge-yes {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-no {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #666;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .table-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 UTI 問診 Bot 後台管理</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>總用戶數</h3>
+                <div class="stat-value" id="totalUsers">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>今日對話數</h3>
+                <div class="stat-value" id="todayChats">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>完成問卷數</h3>
+                <div class="stat-value" id="completedSurveys">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>平均對話輪數</h3>
+                <div class="stat-value" id="avgRounds">-</div>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <button class="btn" onclick="refreshData()">🔄 重新整理</button>
+            <button class="btn" onclick="exportCSV()">📥 匯出 CSV</button>
+            <button class="btn" onclick="resetView()">👁️ 顯示全部</button>
+        </div>
+        
+        <div class="filters">
+            <input type="text" id="filterUser" placeholder="搜尋用戶 ID..." onkeyup="filterTable()">
+            <select id="filterNode" onchange="filterTable()">
+                <option value="">全部題號</option>
+            </select>
+            <input type="date" id="filterDate" onchange="filterTable()">
+        </div>
+        
+        <div class="table-container">
+            <div id="loading" class="loading">載入中...</div>
+            <table id="dataTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>時間</th>
+                        <th>用戶 ID</th>
+                        <th>題號</th>
+                        <th>症狀代碼</th>
+                        <th>用戶回答</th>
+                        <th>機器人回覆</th>
+                        <th>意圖</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        let allData = [];
+        
+        async function loadData() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('dataTable').style.display = 'none';
+                
+                const response = await fetch('/api/admin/stats');
+                const data = await response.json();
+                
+                allData = data.logs || [];
+                
+                // 更新統計數據
+                document.getElementById('totalUsers').textContent = data.total_users || 0;
+                document.getElementById('todayChats').textContent = data.today_chats || 0;
+                document.getElementById('completedSurveys').textContent = data.completed_surveys || 0;
+                document.getElementById('avgRounds').textContent = data.avg_rounds || 0;
+                
+                // 填充題號選擇器
+                const nodes = [...new Set(allData.map(d => d.node_id))].sort();
+                const nodeSelect = document.getElementById('filterNode');
+                nodeSelect.innerHTML = '<option value="">全部題號</option>';
+                nodes.forEach(node => {
+                    if (node) {
+                        nodeSelect.innerHTML += `<option value="${node}">題號 ${node}</option>`;
+                    }
+                });
+                
+                // 顯示表格
+                renderTable(allData);
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dataTable').style.display = 'table';
+            } catch (error) {
+                document.getElementById('loading').innerHTML = `
+                    <div class="error">
+                        ❌ 載入失敗：${error.message}<br>
+                        請確認後台 API 正常運作
+                    </div>
+                `;
+            }
+        }
+        
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${formatDate(row.created_at)}</td>
+                    <td>${row.user_id ? row.user_id.substring(0, 15) + '...' : '-'}</td>
+                    <td>${row.node_id || '-'}</td>
+                    <td><span class="badge badge-yes">${row.symptom_code || '-'}</span></td>
+                    <td>${row.user_input || '-'}</td>
+                    <td>${row.bot_reply ? row.bot_reply.substring(0, 50) + '...' : '-'}</td>
+                    <td>${row.intent || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        function filterTable() {
+            const userFilter = document.getElementById('filterUser').value.toLowerCase();
+            const nodeFilter = document.getElementById('filterNode').value;
+            const dateFilter = document.getElementById('filterDate').value;
+            
+            const filtered = allData.filter(row => {
+                const matchUser = !userFilter || (row.user_id && row.user_id.toLowerCase().includes(userFilter));
+                const matchNode = !nodeFilter || row.node_id === nodeFilter;
+                const matchDate = !dateFilter || (row.created_at && row.created_at.includes(dateFilter));
+                return matchUser && matchNode && matchDate;
+            });
+            
+            renderTable(filtered);
+        }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleString('zh-TW', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        function refreshData() {
+            loadData();
+        }
+        
+        function exportCSV() {
+            window.open('/export/csv', '_blank');
+        }
+        
+        function resetView() {
+            document.getElementById('filterUser').value = '';
+            document.getElementById('filterNode').value = '';
+            document.getElementById('filterDate').value = '';
+            renderTable(allData);
+        }
+        
+        // 頁面載入時自動載入數據
+        loadData();
+        
+        // 每 30 秒自動重新整理
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>
