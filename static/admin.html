@@ -81,12 +81,18 @@
             cursor: pointer;
             font-size: 1em;
             margin-right: 10px;
+            margin-bottom: 10px;
             transition: transform 0.3s, box-shadow 0.3s;
         }
         
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            opacity: 0.8;
         }
         
         .filters {
@@ -111,36 +117,162 @@
             border-color: #667eea;
         }
         
-        .table-container {
+        /* 用戶卡片樣式 */
+        .users-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .user-card {
             background: white;
             border-radius: 15px;
-            padding: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            overflow-x: auto;
+            overflow: hidden;
+            transition: all 0.3s;
         }
         
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .user-card:hover {
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
         }
         
-        th {
+        .user-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-header:hover {
+            opacity: 0.95;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .user-id {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .user-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .user-stat {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+        
+        .expand-icon {
+            font-size: 1.5em;
+            transition: transform 0.3s;
+        }
+        
+        .expand-icon.expanded {
+            transform: rotate(180deg);
+        }
+        
+        .user-details {
+            display: none;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .user-details.expanded {
+            display: block;
+        }
+        
+        /* 對話記錄樣式 */
+        .conversation-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
             padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
-        td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85em;
+            color: #666;
         }
         
-        tr:hover {
-            background: #f5f5f5;
+        .message-node {
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+        }
+        
+        .message-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .question-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 12px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .question-label {
+            font-size: 0.75em;
+            color: #1976D2;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .answer-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            padding: 12px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .answer-label {
+            font-size: 0.75em;
+            color: #388E3C;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .bot-reply-box {
+            background: #fff3e0;
+            border-left: 4px solid #FF9800;
+            padding: 12px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .bot-reply-label {
+            font-size: 0.75em;
+            color: #F57C00;
+            font-weight: bold;
+            margin-bottom: 5px;
         }
         
         .badge {
@@ -148,14 +280,21 @@
             border-radius: 20px;
             font-size: 0.85em;
             font-weight: 600;
+            display: inline-block;
+            margin-top: 5px;
         }
         
-        .badge-yes {
+        .badge-code {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .badge-action {
             background: #d4edda;
             color: #155724;
         }
         
-        .badge-no {
+        .badge-end {
             background: #f8d7da;
             color: #721c24;
         }
@@ -175,6 +314,13 @@
             margin-bottom: 20px;
         }
         
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1em;
+        }
+        
         @media (max-width: 768px) {
             .stats-grid {
                 grid-template-columns: 1fr;
@@ -184,8 +330,14 @@
                 font-size: 1.8em;
             }
             
-            .table-container {
-                padding: 15px;
+            .user-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .user-stats {
+                flex-wrap: wrap;
             }
         }
     </style>
@@ -216,44 +368,34 @@
         <div class="actions">
             <button class="btn" onclick="refreshData()">🔄 重新整理</button>
             <button class="btn" onclick="exportCSV()">📥 匯出 CSV</button>
-            <button class="btn" onclick="resetView()">👁️ 顯示全部</button>
+            <button class="btn btn-secondary" onclick="expandAll()">📂 展開全部</button>
+            <button class="btn btn-secondary" onclick="collapseAll()">📁 收合全部</button>
         </div>
         
         <div class="filters">
-            <input type="text" id="filterUser" placeholder="搜尋用戶 ID..." onkeyup="filterTable()">
-            <select id="filterNode" onchange="filterTable()">
-                <option value="">全部題號</option>
+            <input type="text" id="filterUser" placeholder="搜尋用戶 ID..." onkeyup="filterUsers()">
+            <select id="filterStatus" onchange="filterUsers()">
+                <option value="">全部狀態</option>
+                <option value="completed">已完成</option>
+                <option value="in_progress">進行中</option>
             </select>
-            <input type="date" id="filterDate" onchange="filterTable()">
+            <input type="date" id="filterDate" onchange="filterUsers()">
         </div>
         
-        <div class="table-container">
-            <div id="loading" class="loading">載入中...</div>
-            <table id="dataTable" style="display:none;">
-                <thead>
-                    <tr>
-                        <th>時間</th>
-                        <th>用戶 ID</th>
-                        <th>題號</th>
-                        <th>症狀代碼</th>
-                        <th>用戶回答</th>
-                        <th>機器人回覆</th>
-                        <th>意圖</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                </tbody>
-            </table>
+        <div id="loading" class="loading">載入中...</div>
+        <div id="usersContainer" class="users-container" style="display:none;">
+            <!-- 用戶卡片會在這裡動態生成 -->
         </div>
     </div>
     
     <script>
         let allData = [];
+        let groupedData = {};
         
         async function loadData() {
             try {
                 document.getElementById('loading').style.display = 'block';
-                document.getElementById('dataTable').style.display = 'none';
+                document.getElementById('usersContainer').style.display = 'none';
                 
                 const response = await fetch('/api/admin/stats');
                 const data = await response.json();
@@ -266,21 +408,14 @@
                 document.getElementById('completedSurveys').textContent = data.completed_surveys || 0;
                 document.getElementById('avgRounds').textContent = data.avg_rounds || 0;
                 
-                // 填充題號選擇器
-                const nodes = [...new Set(allData.map(d => d.node_id))].sort();
-                const nodeSelect = document.getElementById('filterNode');
-                nodeSelect.innerHTML = '<option value="">全部題號</option>';
-                nodes.forEach(node => {
-                    if (node) {
-                        nodeSelect.innerHTML += `<option value="${node}">題號 ${node}</option>`;
-                    }
-                });
+                // 按用戶分組數據
+                groupByUser();
                 
-                // 顯示表格
-                renderTable(allData);
+                // 顯示用戶列表
+                renderUsers();
                 
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('dataTable').style.display = 'table';
+                document.getElementById('usersContainer').style.display = 'flex';
             } catch (error) {
                 document.getElementById('loading').innerHTML = `
                     <div class="error">
@@ -291,38 +426,226 @@
             }
         }
         
-        function renderTable(data) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
+        function groupByUser() {
+            groupedData = {};
             
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${formatDate(row.created_at)}</td>
-                    <td>${row.user_id ? row.user_id.substring(0, 15) + '...' : '-'}</td>
-                    <td>${row.node_id || '-'}</td>
-                    <td><span class="badge badge-yes">${row.symptom_code || '-'}</span></td>
-                    <td>${row.user_input || '-'}</td>
-                    <td>${row.bot_reply ? row.bot_reply.substring(0, 50) + '...' : '-'}</td>
-                    <td>${row.intent || '-'}</td>
-                `;
-                tbody.appendChild(tr);
+            allData.forEach(log => {
+                const userId = log.user_id;
+                if (!userId) return;
+                
+                if (!groupedData[userId]) {
+                    groupedData[userId] = {
+                        userId: userId,
+                        logs: [],
+                        firstMessage: log.created_at,
+                        lastMessage: log.created_at,
+                        messageCount: 0,
+                        isCompleted: false
+                    };
+                }
+                
+                groupedData[userId].logs.push(log);
+                groupedData[userId].messageCount++;
+                
+                if (log.created_at < groupedData[userId].firstMessage) {
+                    groupedData[userId].firstMessage = log.created_at;
+                }
+                if (log.created_at > groupedData[userId].lastMessage) {
+                    groupedData[userId].lastMessage = log.created_at;
+                }
+                if (log.is_end || log.intent === 'end') {
+                    groupedData[userId].isCompleted = true;
+                }
+            });
+            
+            // 對每個用戶的記錄按時間排序
+            Object.values(groupedData).forEach(user => {
+                user.logs.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
             });
         }
         
-        function filterTable() {
+        function renderUsers() {
+            const container = document.getElementById('usersContainer');
+            container.innerHTML = '';
+            
+            const users = Object.values(groupedData);
+            
+            if (users.length === 0) {
+                container.innerHTML = '<div class="empty-state">暫無用戶資料</div>';
+                return;
+            }
+            
+            // 按最後訊息時間排序（最新的在前面）
+            users.sort((a, b) => new Date(b.lastMessage) - new Date(a.lastMessage));
+            
+            users.forEach((user, index) => {
+                const userCard = createUserCard(user, index);
+                container.appendChild(userCard);
+            });
+        }
+        
+        function createUserCard(user, index) {
+            const card = document.createElement('div');
+            card.className = 'user-card';
+            card.dataset.userId = user.userId;
+            card.dataset.completed = user.isCompleted ? 'true' : 'false';
+            
+            const shortUserId = user.userId.substring(0, 20) + '...';
+            const statusBadge = user.isCompleted ? 
+                '<span class="badge badge-action">已完成</span>' : 
+                '<span class="badge badge-end">進行中</span>';
+            
+            card.innerHTML = `
+                <div class="user-header" onclick="toggleUser('${user.userId}')">
+                    <div class="user-info">
+                        <div class="user-id">👤 ${shortUserId}</div>
+                        <div class="user-stats">
+                            <span class="user-stat">📝 ${user.messageCount} 則對話</span>
+                            <span class="user-stat">🕐 ${formatDate(user.firstMessage)}</span>
+                            ${statusBadge}
+                        </div>
+                    </div>
+                    <div class="expand-icon" id="icon-${user.userId}">▼</div>
+                </div>
+                <div class="user-details" id="details-${user.userId}">
+                    <div class="conversation-flow">
+                        ${user.logs.map(log => createMessageHTML(log)).join('')}
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function createMessageHTML(log) {
+            const isEnd = log.is_end || log.intent === 'end';
+            const isStart = log.intent === 'start' || log.user_input === '[START]';
+            
+            if (isStart) {
+                return `
+                    <div class="message-item">
+                        <div class="message-header">
+                            <span class="message-node">題號 ${log.node_id || '-'}</span>
+                            <span>${formatDate(log.created_at)}</span>
+                        </div>
+                        <div class="message-content">
+                            <div class="bot-reply-box">
+                                <div class="bot-reply-label">🤖 機器人</div>
+                                <div>${log.prompt || log.bot_reply || '開始問卷'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (isEnd) {
+                return `
+                    <div class="message-item">
+                        <div class="message-header">
+                            <span class="message-node">題號 ${log.node_id || '-'}</span>
+                            <span>${formatDate(log.created_at)}</span>
+                        </div>
+                        <div class="message-content">
+                            <div class="bot-reply-box">
+                                <div class="bot-reply-label">🤖 機器人 (問卷完成)</div>
+                                <div>${log.education_text || log.bot_reply || '問卷已完成'}</div>
+                            </div>
+                            ${log.symptom_code ? `<span class="badge badge-code">症狀: ${log.symptom_code}</span>` : ''}
+                            ${log.action_tag ? `<span class="badge badge-action">建議: ${log.action_tag}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="message-item">
+                    <div class="message-header">
+                        <span class="message-node">題號 ${log.node_id || '-'}</span>
+                        <span>${formatDate(log.created_at)}</span>
+                    </div>
+                    <div class="message-content">
+                        <div class="question-box">
+                            <div class="question-label">❓ 問題</div>
+                            <div>${log.prompt || '-'}</div>
+                        </div>
+                        <div class="answer-box">
+                            <div class="answer-label">💬 用戶回答</div>
+                            <div>${log.user_input || '-'}</div>
+                        </div>
+                        ${log.bot_reply ? `
+                        <div class="bot-reply-box">
+                            <div class="bot-reply-label">🤖 機器人回覆</div>
+                            <div>${log.bot_reply}</div>
+                        </div>
+                        ` : ''}
+                        ${log.symptom_code ? `<span class="badge badge-code">症狀: ${log.symptom_code}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function toggleUser(userId) {
+            const details = document.getElementById(`details-${userId}`);
+            const icon = document.getElementById(`icon-${userId}`);
+            
+            if (details.classList.contains('expanded')) {
+                details.classList.remove('expanded');
+                icon.classList.remove('expanded');
+            } else {
+                details.classList.add('expanded');
+                icon.classList.add('expanded');
+            }
+        }
+        
+        function expandAll() {
+            document.querySelectorAll('.user-details').forEach(el => el.classList.add('expanded'));
+            document.querySelectorAll('.expand-icon').forEach(el => el.classList.add('expanded'));
+        }
+        
+        function collapseAll() {
+            document.querySelectorAll('.user-details').forEach(el => el.classList.remove('expanded'));
+            document.querySelectorAll('.expand-icon').forEach(el => el.classList.remove('expanded'));
+        }
+        
+        function filterUsers() {
             const userFilter = document.getElementById('filterUser').value.toLowerCase();
-            const nodeFilter = document.getElementById('filterNode').value;
+            const statusFilter = document.getElementById('filterStatus').value;
             const dateFilter = document.getElementById('filterDate').value;
             
-            const filtered = allData.filter(row => {
-                const matchUser = !userFilter || (row.user_id && row.user_id.toLowerCase().includes(userFilter));
-                const matchNode = !nodeFilter || row.node_id === nodeFilter;
-                const matchDate = !dateFilter || (row.created_at && row.created_at.includes(dateFilter));
-                return matchUser && matchNode && matchDate;
+            document.querySelectorAll('.user-card').forEach(card => {
+                const userId = card.dataset.userId.toLowerCase();
+                const isCompleted = card.dataset.completed === 'true';
+                
+                let showUser = true;
+                
+                // 用戶ID篩選
+                if (userFilter && !userId.includes(userFilter)) {
+                    showUser = false;
+                }
+                
+                // 狀態篩選
+                if (statusFilter) {
+                    if (statusFilter === 'completed' && !isCompleted) {
+                        showUser = false;
+                    }
+                    if (statusFilter === 'in_progress' && isCompleted) {
+                        showUser = false;
+                    }
+                }
+                
+                // 日期篩選（檢查用戶的記錄中是否有符合日期的）
+                if (dateFilter && showUser) {
+                    const user = groupedData[card.dataset.userId];
+                    const hasDateMatch = user.logs.some(log => 
+                        log.created_at && log.created_at.includes(dateFilter)
+                    );
+                    if (!hasDateMatch) {
+                        showUser = false;
+                    }
+                }
+                
+                card.style.display = showUser ? 'block' : 'none';
             });
-            
-            renderTable(filtered);
         }
         
         function formatDate(dateStr) {
@@ -343,13 +666,6 @@
         
         function exportCSV() {
             window.open('/export/csv', '_blank');
-        }
-        
-        function resetView() {
-            document.getElementById('filterUser').value = '';
-            document.getElementById('filterNode').value = '';
-            document.getElementById('filterDate').value = '';
-            renderTable(allData);
         }
         
         // 頁面載入時自動載入數據

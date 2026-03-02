@@ -55,40 +55,6 @@ def llm_chat(user_input: str) -> Optional[str]:
         return None
     
     try:
-        # 清除可能造成問題的 proxy 設定
-        import os
-        
-        from openai import OpenAI
-        
-        # 建立 client 時不傳遞任何 proxy 參數
-        client = OpenAI(
-            api_key=OPENAI_API_KEY,
-            http_client=None  # 使用預設 client
-        )
-        
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": MEDICAL_SYSTEM_PROMPT},
-                {"role": "user", "content": user_input}
-            ],
-            max_tokens=500,
-            temperature=0.7
-        )
-        print(f"[DEBUG] LLM response success")
-        return response.choices[0].message.content
-    except Exception as e:
-        print(f"[DEBUG] LLM Chat Error: {e}")
-        return None
-    """使用 OpenAI API 回覆用戶問題"""
-    print(f"[DEBUG] OPENAI_API_KEY present: {bool(OPENAI_API_KEY)}")
-    print(f"[DEBUG] Key length: {len(OPENAI_API_KEY) if OPENAI_API_KEY else 0}")
-    
-    if not OPENAI_API_KEY:
-        print("[DEBUG] No OpenAI API key configured")
-        return None
-    
-    try:
         from openai import OpenAI
         client = OpenAI(api_key=OPENAI_API_KEY)
         
