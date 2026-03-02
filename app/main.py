@@ -223,6 +223,39 @@ async def webhook(
                     intent="llm_chat",
                     is_end=False
                 )
+            else:
+                # LLM 回覆失敗時的 fallback
+                fallback_msg = "感謝您的訊息！如果您想重新進行問卷評估，請輸入「泌尿道問題」。"
+                line_reply(reply_token, [fallback_msg])
+                db.log_message(
+                    user_id=user_id,
+                    node_id="COMPLETED",
+                    symptom_code="",
+                    action_tag="",
+                    user_input=user_input,
+                    bot_reply=fallback_msg,
+                    prompt="",
+                    education_text="",
+                    intent="llm_fallback",
+                    is_end=False
+                )
+            continue
+        if current_node_id == "COMPLETED":
+            llm_response = llm_chat(user_input)
+            if llm_response:
+                line_reply(reply_token, [llm_response])
+                db.log_message(
+                    user_id=user_id,
+                    node_id="COMPLETED",
+                    symptom_code="",
+                    action_tag="",
+                    user_input=user_input,
+                    bot_reply=llm_response,
+                    prompt="",
+                    education_text="",
+                    intent="llm_chat",
+                    is_end=False
+                )
             continue
         
         # ===== 問診流程處理 =====
