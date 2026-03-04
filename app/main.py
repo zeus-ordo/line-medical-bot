@@ -21,6 +21,7 @@ from dotenv import load_dotenv
 from app.flow import FlowEngine
 from app.database import Database
 from app.intent import IntentClassifier
+from app.knowledge import KnowledgeBase
 
 load_dotenv()
 
@@ -28,6 +29,7 @@ load_dotenv()
 db = Database()
 flow = FlowEngine("data/flow.csv")
 intent_classifier = IntentClassifier()
+knowledge_base = KnowledgeBase()
 
 # LINE 設定
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "")
@@ -264,9 +266,29 @@ async def webhook(
         # ===== 取得用戶當前狀態 =====
         current_node_id = db.get_user_state(user_id)
         
-        # ===== 如果用戶已完成問卷，使用 LLM 回覆 =====
+        # ===== 如果用戶已完成問卷 =====
         if current_node_id == "COMPLETED":
-            llm_response = llm_chat(user_input)
+            # 先搜尋知識庫
+            kb_response = knowledge_base.search(user_input)
+            
+            if kb_response:
+                # 知識庫有匹配的回覆
+                line_reply(reply_token, [kb_response])
+                db.log_message(
+                    user_id=user_id,
+                    node_id="COMPLETED",
+                    symptom_code="",
+                    action_tag="",
+                    user_input=user_input,
+                    bot_reply=kb_response,
+                    prompt="",
+                    education_text="",
+                    intent="kb_match",
+                    is_end=False
+                )
+            else:
+                # 知識庫沒匹配，使用 LLM
+                llm_response = llm_chat(user_input)
             if llm_response:
                 line_reply(reply_token, [llm_response])
                 db.log_message(
