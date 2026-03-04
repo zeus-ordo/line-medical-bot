@@ -293,9 +293,9 @@ async def webhook(
         
         # ===== 如果用戶狀態為 "0"（剛加入好友），強制進入問卷 =====
         if current_node_id == "0":
-            # 重置用戶狀態到第一題
-            db.reset_user(user_id, flow.get_start_node())
-            current_node_id = flow.get_start_node()
+            # 重置用戶狀態到第一題（跳過歡迎訊息 node 0，直接從 node 1 開始）
+            db.reset_user(user_id, "1")
+            current_node_id = "1"
             current_node = flow.get_node(current_node_id)
             replies = flow.build_reply(current_node)
             line_reply(reply_token, replies)
