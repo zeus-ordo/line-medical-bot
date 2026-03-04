@@ -208,57 +208,7 @@ static_path = os.path.join(os.path.dirname(__file__), "..", "static")
 if os.path.exists(static_path):
     app.mount("/static", StaticFiles(directory=static_path), name="static")
 
-#XM|@app.post("/webhook")
-#ZN|async def webhook(
-#RT|    request: Request,
-#HN|    x_line_signature: Optional[str] = Header(None, alias="X-Line-Signature")
-#KQ|):
-#VJ|    """LINE Webhook 接收端點 - 醫療問診流程"""
-#WS|    body = await request.body()
-#QV|    
-#BB|    if not validate_signature(body, x_line_signature or ""):
-#ZH|        raise HTTPException(status_code=401, detail="Invalid signature")
-#HT|    
-#SK|    data = await request.json()
-#MK|    
-#NR|    # ===== 處理加入好友事件 =====
-#NR|    for event in data.get("events", []):
-#NR|        if event.get("type") == "follow":
-#NR|            # 用戶加入好友，發送歡迎訊息
-#NR|            user_id = event.get("source", {}).get("userId")
-#NR|            reply_token = event.get("replyToken", "")
-#NR|            
-#NR|            if user_id and reply_token:
-#NR|                # 取得歡迎訊息（node 0）
-#NR|                welcome_node = flow.get_node("0")
-#NR|                if welcome_node:
-#NR|                    welcome_text = welcome_node.get("content", "")
-#NR|                    line_reply(reply_token, [welcome_text])
-#NR|                    
-#NR|                    # 記錄對話
-#NR|                    db.log_message(
-#NR|                        user_id=user_id,
-#NR|                        node_id="0",
-#NR|                        symptom_code="",
-#NR|                        action_tag="",
-#NR|                        user_input="[加入好友]",
-#NR|                        bot_reply=welcome_text,
-#NR|                        prompt="",
-#NR|                        education_text="",
-#NR|                        intent="welcome",
-#NR|                        is_end=False
-#NR|                    )
-#NR|    
-#NR|    # ===== 處理訊息事件 =====
-#YK|    for event in data.get("events", []):
-#HN|        if event.get("type") != "message":
-#MZ|            continue
-#YK|#MZ|            continue
-#YS|#NH|        if event.get("message", {}).get("type") != "text":
-#YK|#MZ|            continue
-#NR|@app.post("/webhook")
-#ZN|async def webhook(
-#MZ|            continue
+@app.post("/webhook")
 async def webhook(
     request: Request,
     x_line_signature: Optional[str] = Header(None, alias="X-Line-Signature")
@@ -269,39 +219,30 @@ async def webhook(
     if not validate_signature(body, x_line_signature or ""):
         raise HTTPException(status_code=401, detail="Invalid signature")
     
-    #SK|    data = await request.json()
-#PX|    
-#NR|    # ===== 處理加入好友事件 =====
-#NR|    for event in data.get("events", []):
-#NR|        if event.get("type") == "follow":
-#NR|            # 用戶加入好友，發送歡迎訊息
-#NR|            user_id = event.get("source", {}).get("userId")
-#NR|            reply_token = event.get("replyToken", "")
-#NR|            
-#NR|            if user_id and reply_token:
-#NR|                # 取得歡迎訊息（node 0）
-#NR|                welcome_node = flow.get_node("0")
-#NR|                if welcome_node:
-#NR|                    welcome_text = welcome_node.get("prompt", "")
-#NR|                    line_reply(reply_token, [welcome_text])
-#NR|                    
-#NR|                    # 記錄對話
-#NR|                    db.log_message(
-#NR|                        user_id=user_id,
-#NR|                        node_id="0",
-#NR|                        symptom_code="",
-#NR|                        action_tag="",
-#NR|                        user_input="[加入好友]",
-#NR|                        bot_reply=welcome_text,
-#NR|                        prompt="",
-#NR|                        education_text="",
-#NR|                        intent="welcome",
-#NR|                        is_end=False
-#NR|                    )
-#NR|    
-#NR|    # ===== 處理訊息事件 =====
-#YK|    for event in data.get("events", []):
-#HN|        if event.get("type") != "message":
+    data = await request.json()
+    
+    # ===== 處理加入好友事件 =====
+    for event in data.get("events", []):
+        if event.get("type") == "follow":
+            user_id = event.get("source", {}).get("userId")
+            reply_token = event.get("replyToken", "")
+            if user_id and reply_token:
+                welcome_node = flow.get_node("0")
+                if welcome_node:
+                    welcome_text = welcome_node.get("prompt", "")
+                    line_reply(reply_token, [welcome_text])
+                    db.log_message(
+                        user_id=user_id,
+                        node_id="0",
+                        symptom_code="",
+                        action_tag="",
+                        user_input="[加入好友]",
+                        bot_reply=welcome_text,
+                        prompt="",
+                        education_text="",
+                        intent="welcome",
+                        is_end=False
+                    )
     
     for event in data.get("events", []):
         if event.get("type") != "message":
@@ -348,13 +289,11 @@ async def webhook(
         # ===== 取得用戶當前狀態 =====
         current_node_id = db.get_user_state(user_id)
         
-        # ===== 如果用戶已完成問卷 =====
+        # ===== 如果用戶已完成問卷，使用 LLM 回覆 =====
         if current_node_id == "COMPLETED":
             # 先搜尋知識庫
             kb_response = knowledge_base.search(user_input)
-            
             if kb_response:
-                # 知識庫有匹配的回覆
                 line_reply(reply_token, [kb_response])
                 db.log_message(
                     user_id=user_id,
@@ -368,9 +307,9 @@ async def webhook(
                     intent="kb_match",
                     is_end=False
                 )
-            else:
-                # 知識庫沒匹配，使用 LLM
-                llm_response = llm_chat(user_input)
+                continue
+            # 知識庫沒匹配，使用 LLM
+            llm_response = llm_chat(user_input)
             if llm_response:
                 line_reply(reply_token, [llm_response])
                 db.log_message(
@@ -403,6 +342,24 @@ async def webhook(
                 )
             continue
         if current_node_id == "COMPLETED":
+            # 先搜尋知識庫
+            kb_response = knowledge_base.search(user_input)
+            if kb_response:
+                line_reply(reply_token, [kb_response])
+                db.log_message(
+                    user_id=user_id,
+                    node_id="COMPLETED",
+                    symptom_code="",
+                    action_tag="",
+                    user_input=user_input,
+                    bot_reply=kb_response,
+                    prompt="",
+                    education_text="",
+                    intent="kb_match",
+                    is_end=False
+                )
+                continue
+            # 知識庫沒匹配，使用 LLM
             llm_response = llm_chat(user_input)
             if llm_response:
                 line_reply(reply_token, [llm_response])
@@ -437,6 +394,25 @@ async def webhook(
         # 檢查是否為新用戶（還沒有對話記錄）
         user_logs = db.get_user_logs(user_id)
         is_new_user = len(user_logs) == 0
+        
+        # 新用戶先搜尋知識庫
+        if is_new_user:
+            kb_response = knowledge_base.search(user_input)
+            if kb_response:
+                line_reply(reply_token, [kb_response])
+                db.log_message(
+                    user_id=user_id,
+                    node_id="NEW_USER",
+                    symptom_code="",
+                    action_tag="",
+                    user_input=user_input,
+                    bot_reply=kb_response,
+                    prompt="",
+                    education_text="",
+                    intent="kb_match",
+                    is_end=False
+                )
+                continue
         
         if is_new_user:
             # 新用戶：顯示第一題（還沒回答，不跳轉）
