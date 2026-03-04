@@ -253,7 +253,11 @@ if os.path.exists(static_path):
 #YK|    for event in data.get("events", []):
 #HN|        if event.get("type") != "message":
 #MZ|            continue
-#NH|        if event.get("message", {}).get("type") != "text":
+#YK|#MZ|            continue
+#YS|#NH|        if event.get("message", {}).get("type") != "text":
+#YK|#MZ|            continue
+#NR|@app.post("/webhook")
+#ZN|async def webhook(
 #MZ|            continue
 async def webhook(
     request: Request,
