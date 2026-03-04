@@ -265,7 +265,39 @@ async def webhook(
     if not validate_signature(body, x_line_signature or ""):
         raise HTTPException(status_code=401, detail="Invalid signature")
     
-    data = await request.json()
+    #SK|    data = await request.json()
+#PX|    
+#NR|    # ===== 處理加入好友事件 =====
+#NR|    for event in data.get("events", []):
+#NR|        if event.get("type") == "follow":
+#NR|            # 用戶加入好友，發送歡迎訊息
+#NR|            user_id = event.get("source", {}).get("userId")
+#NR|            reply_token = event.get("replyToken", "")
+#NR|            
+#NR|            if user_id and reply_token:
+#NR|                # 取得歡迎訊息（node 0）
+#NR|                welcome_node = flow.get_node("0")
+#NR|                if welcome_node:
+#NR|                    welcome_text = welcome_node.get("prompt", "")
+#NR|                    line_reply(reply_token, [welcome_text])
+#NR|                    
+#NR|                    # 記錄對話
+#NR|                    db.log_message(
+#NR|                        user_id=user_id,
+#NR|                        node_id="0",
+#NR|                        symptom_code="",
+#NR|                        action_tag="",
+#NR|                        user_input="[加入好友]",
+#NR|                        bot_reply=welcome_text,
+#NR|                        prompt="",
+#NR|                        education_text="",
+#NR|                        intent="welcome",
+#NR|                        is_end=False
+#NR|                    )
+#NR|    
+#NR|    # ===== 處理訊息事件 =====
+#YK|    for event in data.get("events", []):
+#HN|        if event.get("type") != "message":
     
     for event in data.get("events", []):
         if event.get("type") != "message":
