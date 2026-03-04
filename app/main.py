@@ -231,7 +231,6 @@ async def webhook(
                 if welcome_node:
                     welcome_text = welcome_node.get("prompt", "")
                     line_reply(reply_token, [welcome_text])
-                    db.update_user_state(user_id, "0")
                     db.log_message(
                         user_id=user_id,
                         node_id="0",
@@ -287,32 +286,7 @@ async def webhook(
             )
             continue
         
-        #YV|        # ===== 取得用戶當前狀態 =====
-#QZ|        current_node_id = db.get_user_state(user_id)
-#NR|        
-#NR|        # ===== 如果用戶還在歡迎訊息階段（node 0），強制進入問卷 =====
-#NR|        if current_node_id == "0":
-#NR|            # 重置到第一題
-#NR|            db.reset_user(user_id, "1")
-#NR|            current_node_id = "1"
-#NR|            current_node = flow.get_node(current_node_id)
-#NR|            replies = flow.build_reply(current_node)
-#NR|            line_reply(reply_token, replies)
-#NR|            db.log_message(
-#NR|                user_id=user_id,
-#NR|                node_id=current_node_id,
-#NR|                symptom_code=current_node.get("tags", {}).get("code", "") if current_node else "",
-#NR|                action_tag=current_node.get("tags", {}).get("action_tag", "") if current_node else "",
-#NR|                user_input=user_input,
-#NR|                bot_reply="\n".join(replies),
-#NR|                prompt=current_node.get("prompt", "") if current_node else "",
-#NR|                education_text=current_node.get("education_text", "") if current_node else "",
-#NR|                intent="survey_start_after_welcome",
-#NR|                is_end=False
-#NR|            )
-#NR|            continue
-#NR|
-#VT|        # ===== 如果用戶已完成問卷 =====
+        # ===== 取得用戶當前狀態 =====
         current_node_id = db.get_user_state(user_id)
         
         # ===== 如果用戶已完成問卷，使用 LLM 回覆 =====
