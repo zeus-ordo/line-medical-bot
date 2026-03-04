@@ -243,6 +243,8 @@ async def webhook(
                         intent="welcome",
                         is_end=False
                     )
+                    # 設定用戶狀態為 "0"，下次訊息會強制進入問卷
+                    db.update_user_state(user_id, "0")
     
     for event in data.get("events", []):
         if event.get("type") != "message":
@@ -288,6 +290,28 @@ async def webhook(
         
         # ===== 取得用戶當前狀態 =====
         current_node_id = db.get_user_state(user_id)
+        
+        # ===== 如果用戶狀態為 "0"（剛加入好友），強制進入問卷 =====
+        if current_node_id == "0":
+            # 重置用戶狀態到第一題
+            db.reset_user(user_id, flow.get_start_node())
+            current_node_id = flow.get_start_node()
+            current_node = flow.get_node(current_node_id)
+            replies = flow.build_reply(current_node)
+            line_reply(reply_token, replies)
+            db.log_message(
+                user_id=user_id,
+                node_id=current_node_id,
+                symptom_code=current_node.get("tags", {}).get("code", "") if current_node else "",
+                action_tag=current_node.get("tags", {}).get("action_tag", "") if current_node else "",
+                user_input=user_input,
+                bot_reply="\n".join(replies),
+                prompt=current_node.get("prompt", "") if current_node else "",
+                education_text=current_node.get("education_text", "") if current_node else "",
+                intent="force_survey",
+                is_end=False
+            )
+            continue
         
         # ===== 如果用戶已完成問卷，使用 LLM 回覆 =====
         if current_node_id == "COMPLETED":
