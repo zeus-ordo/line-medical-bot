@@ -436,24 +436,7 @@ async def webhook(
         # 如果 current_node_id 是 "1"，說明是問卷第一題，回答後需要跳轉
         is_first_question = current_node_id == "1"
         
-        # 如果不是第一題，先搜尋知識庫
-        if not is_first_question:
-            kb_response = knowledge_base.search(user_input)
-            if kb_response:
-                line_reply(reply_token, [kb_response])
-                db.log_message(
-                    user_id=user_id,
-                    node_id="NEW_USER",
-                    symptom_code="",
-                    action_tag="",
-                    user_input=user_input,
-                    bot_reply=kb_response,
-                    prompt="",
-                    education_text="",
-                    intent="kb_match",
-                    is_end=False
-                )
-                continue
+        # 問卷進行中不走知識庫攔截，避免選項回答被錯誤分流
         
         if is_first_question:
             # 第一題：用戶已經看過題目了，需要根據回答跳轉

@@ -201,19 +201,19 @@ class FlowEngine:
 
         # 3.5. 關鍵字匹配（針對第10題治療選項）
         keyword_groups = [
-            ("hormone", ["雌激素", "賀爾蒙", "hormonal", "estrogen"]),
-            ("ha", ["ha", "玻尿酸", "灌注", "bladder"]),
-            ("oral", ["u101", "口服", "黏膜", "repair"]),
+            ("hormone", ["雌激素", "賀爾蒙", "荷爾蒙", "更年期", "hormonal", "estrogen"]),
+            ("ha", ["ha", "玻尿酸", "膀胱灌注", "灌注", "instillation", "bladder"]),
+            ("oral", ["u101", "口服", "黏膜", "修補", "gag", "repair"]),
         ]
         for key, next_node in transitions.items():
             key_lower = key.lower()
             for group_name, keywords in keyword_groups:
                 if any(keyword in user_input_lower for keyword in keywords):
-                    if group_name == "hormone" and any(k in key_lower for k in ["雌激素", "賀爾蒙", "hormonal", "estrogen"]):
+                    if group_name == "hormone" and any(k in key_lower for k in ["雌激素", "賀爾蒙", "荷爾蒙", "hormonal", "estrogen"]):
                         return next_node
-                    if group_name == "ha" and any(k in key_lower for k in ["ha", "玻尿酸", "灌注", "bladder"]):
+                    if group_name == "ha" and any(k in key_lower for k in ["ha", "玻尿酸", "膀胱灌注", "灌注", "instillation", "bladder"]):
                         return next_node
-                    if group_name == "oral" and any(k in key_lower for k in ["u101", "口服", "黏膜", "repair"]):
+                    if group_name == "oral" and any(k in key_lower for k in ["u101", "口服", "黏膜", "修補", "gag", "repair"]):
                         return next_node
 
         # 3.7. 從輸入中抓取數字（如「1到11」「選2」）
