@@ -454,7 +454,7 @@ async def webhook(
                 education = next_node.get("education_text", "")
             else:
                 # 流程結束
-                replies = ["問卷已完成，感謝您的配合！"]
+                replies = ["問卷已完成，感謝您的配合！\n\n【日常預防建議】\n1. 每日飲水 2000cc 以上\n2. 如廁後由前往後擦拭\n3. 性行為後立即排尿\n4. 避免憋尿\n\n如果您想了解更多關於泌尿道感染的衛教資訊，歡迎隨時詢問我喔！"]
                 is_end = True
                 symptom_code = ""
                 action_tag = ""
@@ -476,7 +476,7 @@ async def webhook(
                 education = next_node.get("education_text", "")
             else:
                 # 流程結束
-                replies = ["問卷已完成，感謝您的配合！"]
+                replies = ["問卷已完成，感謝您的配合！\n\n【日常預防建議】\n1. 每日飲水 2000cc 以上\n2. 如廁後由前往後擦拭\n3. 性行為後立即排尿\n4. 避免憋尿\n\n如果您想了解更多關於泌尿道感染的衛教資訊，歡迎隨時詢問我喔！"]
                 is_end = True
                 symptom_code = ""
                 action_tag = ""
