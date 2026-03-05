@@ -9,6 +9,7 @@ Flow Engine - 支援醫療問診流程
 - 使用者回答肯定/否定/選項 → transitions
 """
 import csv
+import re
 import pandas as pd
 from typing import Dict, List, Optional, Any
 
@@ -55,6 +56,13 @@ class FlowEngine:
         yes_branch = self._get_value(row, ["使用者回答肯定…→ 進入分支", "肯定分支", "yes_branch", "transitions_yes"])
         no_branch = self._get_value(row, ["使用者回答否定…→ 進入分支", "否定分支", "no_branch", "transitions_no"])
         choices_str = self._get_value(row, ["選項", "choices", "選項分支"])
+        education_text = self._get_value(row, ["內容說明（衛教）", "衛教", "education_text", "說明"], default="")
+        
+        # 如果沒有選項但 column 6 包含 | 且 yes/no 為空，則視為多選題
+        if not choices_str and yes_branch == "" and no_branch == "":
+            if education_text and "|" in education_text:
+                choices_str = education_text
+                education_text = ""
         
         # 建立 transitions
         transitions = {}
@@ -74,7 +82,7 @@ class FlowEngine:
         node = {
             "id": node_id,
             "prompt": self._get_value(row, ["判斷問題", "prompt", "question", "內容"], default=""),
-            "education_text": self._get_value(row, ["內容說明（衛教）", "衛教", "education_text", "說明"], default=""),
+            "education_text": education_text,
             "tags": {
                 "code": self._get_value(row, ["症狀代碼", "code", "tags_code", "症狀"], default=""),
                 "action_tag": self._get_value(row, ["建議行動方向", "action_tag", "action", "行動方向"], default="")
@@ -102,7 +110,7 @@ class FlowEngine:
         """解析選項與對應的下一節點"""
         choices = []
         # 支援多種分隔符號
-        for item in choices_str.replace("；", ";").replace("\n", ";").split(";"):
+        for item in choices_str.replace("；", ";").replace("\n", ";").replace(",", ";").split(";"):
             item = item.strip()
             if not item:
                 continue
@@ -165,6 +173,13 @@ class FlowEngine:
             if re.search(r'(否|不|不要|不行|沒有|no|nope|nah)', user_lower):
                 if "no" in transitions:
                     return transitions["no"]
+
+        # 1.7. 數字選項（1/2/3）依 transitions 順序對應
+        if intent.isdigit():
+            index = int(intent) - 1
+            transition_items = list(transitions.items())
+            if 0 <= index < len(transition_items):
+                return transition_items[index][1]
         
         # 2. 嘗試匹配選項 key（針對多選題）
         user_input_lower = user_input.strip().lower()
