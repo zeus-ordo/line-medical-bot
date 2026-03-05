@@ -474,9 +474,7 @@ async def webhook(
                 action_tag = tags.get("action_tag", "")
                 prompt = next_node.get("prompt", "")
                 education = next_node.get("education_text", "")
-            #ZR|            else:
-#JY|                # 流程結束
-#TM|                replies = ["問卷已完成！感謝您的配合。\n\n【日常預防建議】\n1. 每日飲水 2000cc 以上\n2. 如廁後由前往後擦拭\n3. 性行為後立即排尿\n4. 避免憋尿\n\n如果想了解更多衛教資訊，歡迎隨時詢問我喔！"]
+            else:
                 # 流程結束
                 replies = ["問卷已完成，感謝您的配合！"]
                 is_end = True
