@@ -156,6 +156,16 @@ class FlowEngine:
         if intent in transitions:
             return transitions[intent]
         
+        # 1.5. 如果 intent 是 unknown，嘗試用戶輸入中是否有 是/否
+        if intent == "unknown":
+            user_lower = user_input.strip().lower()
+            if re.search(r'(是|對|好|可以|yes|yep|yeah|ok|要|想)', user_lower):
+                if "yes" in transitions:
+                    return transitions["yes"]
+            if re.search(r'(否|不|不要|不行|沒有|no|nope|nah)', user_lower):
+                if "no" in transitions:
+                    return transitions["no"]
+        
         # 2. 嘗試匹配選項 key（針對多選題）
         user_input_lower = user_input.strip().lower()
         for key, next_node in transitions.items():
