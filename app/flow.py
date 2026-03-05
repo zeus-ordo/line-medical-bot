@@ -254,8 +254,11 @@ class FlowEngine:
                 messages.append("請回覆「是」或「否」")
             elif len(transitions) > 0:
                 # 多選題
-                options_text = "、".join([f"「{k}」" for k in transitions.keys()])
-                messages.append(f"請選擇：{options_text}")
+                if node.get("id") == "10":
+                    messages.append("請選擇 1 2 3")
+                else:
+                    options_text = "、".join([f"「{k}」" for k in transitions.keys()])
+                    messages.append(f"請選擇：{options_text}")
         
         return messages if messages else ["感謝您的回覆！"]
     
