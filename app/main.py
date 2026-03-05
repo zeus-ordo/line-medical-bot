@@ -149,8 +149,12 @@ def build_treatment_summary_reply(node: dict) -> list:
     node_id = node.get("id", "")
     title = TREATMENT_NODE_SUMMARIES.get(node_id, node.get("tags", {}).get("action_tag", "治療選項"))
     summary = node.get("education_text", "").strip()
+    if summary.startswith(title):
+        content = summary
+    else:
+        content = f"【{title}】\n{summary}"
     return [
-        f"【{title}】\n{summary}",
+        content,
         "（以上為衛教資訊，實際治療請由醫師評估）\n接下來將繼續後續問卷。",
     ]
 
