@@ -198,7 +198,32 @@ class FlowEngine:
                 or user_input_normalized in key_normalized
             ):
                 return next_node
-        
+
+        # 3.5. 關鍵字匹配（針對第10題治療選項）
+        keyword_groups = [
+            ("hormone", ["雌激素", "賀爾蒙", "hormonal", "estrogen"]),
+            ("ha", ["ha", "玻尿酸", "灌注", "bladder"]),
+            ("oral", ["u101", "口服", "黏膜", "repair"]),
+        ]
+        for key, next_node in transitions.items():
+            key_lower = key.lower()
+            for group_name, keywords in keyword_groups:
+                if any(keyword in user_input_lower for keyword in keywords):
+                    if group_name == "hormone" and any(k in key_lower for k in ["雌激素", "賀爾蒙", "hormonal", "estrogen"]):
+                        return next_node
+                    if group_name == "ha" and any(k in key_lower for k in ["ha", "玻尿酸", "灌注", "bladder"]):
+                        return next_node
+                    if group_name == "oral" and any(k in key_lower for k in ["u101", "口服", "黏膜", "repair"]):
+                        return next_node
+
+        # 3.7. 從輸入中抓取數字（如「1到11」「選2」）
+        number_match = re.search(r"([1-9])", user_input_lower)
+        if number_match:
+            index = int(number_match.group(1)) - 1
+            transition_items = list(transitions.items())
+            if 0 <= index < len(transition_items):
+                return transition_items[index][1]
+
         # 4. 無下一節點 = 結束
         return None
     
