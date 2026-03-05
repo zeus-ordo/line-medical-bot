@@ -415,12 +415,12 @@ async def webhook(
         if not current_node:
             return {"status": "error", "message": "Flow not loaded"}
         
-        # 檢查是否為新用戶（還沒有對話記錄）
-        user_logs = db.get_user_logs(user_id)
-        is_new_user = len(user_logs) == 0
+        # 檢查是否為新用戶（從第一題開始，需要回答後才跳轉）
+        # 如果 current_node_id 是 "1"，說明是問卷第一題，回答後需要跳轉
+        is_first_question = current_node_id == "1"
         
-        # 新用戶先搜尋知識庫
-        if is_new_user:
+        # 如果不是第一題，先搜尋知識庫
+        if not is_first_question:
             kb_response = knowledge_base.search(user_input)
             if kb_response:
                 line_reply(reply_token, [kb_response])
@@ -438,19 +438,30 @@ async def webhook(
                 )
                 continue
         
-        if is_new_user:
-            # 新用戶：顯示第一題（還沒回答，不跳轉）
-            replies = flow.build_reply(current_node)
-            is_end = current_node.get("is_end", False)
-            tags = current_node.get("tags", {})
-            symptom_code = tags.get("code", "")
-            action_tag = tags.get("action_tag", "")
-            prompt = current_node.get("prompt", "")
-            education = current_node.get("education_text", "")
-            intent = "new_user"
-            next_node_id = current_node_id  # 保持在同一題，等待回答
+        if is_first_question:
+            # 第一題：用戶已經看過題目了，需要根據回答跳轉
+            intent = intent_classifier.classify(user_input, current_node)
+            next_node_id = flow.get_next_node(current_node, intent, user_input)
+            next_node = flow.get_node(next_node_id) if next_node_id else None
+            
+            if next_node:
+                replies = flow.build_reply(next_node)
+                is_end = next_node.get("is_end", False)
+                tags = next_node.get("tags", {})
+                symptom_code = tags.get("code", "")
+                action_tag = tags.get("action_tag", "")
+                prompt = next_node.get("prompt", "")
+                education = next_node.get("education_text", "")
+            else:
+                # 流程結束
+                replies = ["問卷已完成，感謝您的配合！"]
+                is_end = True
+                symptom_code = ""
+                action_tag = ""
+                prompt = ""
+                education = ""
         else:
-            # 已有記錄的用戶：根據回答跳到下一題
+            # 非第一題：根據回答跳到下一題
             intent = intent_classifier.classify(user_input, current_node)
             next_node_id = flow.get_next_node(current_node, intent, user_input)
             next_node = flow.get_node(next_node_id) if next_node_id else None
