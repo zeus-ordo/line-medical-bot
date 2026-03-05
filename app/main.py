@@ -47,7 +47,6 @@ TREATMENT_NODE_SUMMARIES = {
     "12": "此方案由醫療人員於門診執行，重點是修復膀胱黏膜保護層並減少刺激症狀。",
     "13": "此方案屬於非抗生素口服預防方向，臨床證據仍在累積，需由醫師評估適用性。",
 }
-EXPAND_EDUCATION_KEYWORDS = ["展開", "完整", "詳細", "全文", "更多"]
 
 # 醫療客服系統提示
 MEDICAL_SYSTEM_PROMPT = """你是泌尿科健康顧問，專門回答關於泌尿道感染的問題。
@@ -146,24 +145,13 @@ def is_survey_keyword(text: str) -> bool:
     return False
 
 
-def is_expand_education_request(text: str) -> bool:
-    text_lower = text.strip().lower()
-    for keyword in EXPAND_EDUCATION_KEYWORDS:
-        if keyword in text_lower:
-            return True
-    return False
-
-
 def build_treatment_summary_reply(node: dict) -> list:
     node_id = node.get("id", "")
     title = node.get("tags", {}).get("action_tag", "治療選項")
     summary = TREATMENT_NODE_SUMMARIES.get(node_id, "以下為該選項重點摘要。")
-    prompt = node.get("prompt", "")
     return [
         f"【{title}】\n{summary}",
-        "若要查看完整衛教內容，請回覆「展開完整內容」。",
-        prompt,
-        "請回覆「是」或「否」",
+        "已為您整理重點，接下來將繼續後續問卷。",
     ]
 
 def line_reply(reply_token: str, messages: list) -> bool:
@@ -444,30 +432,6 @@ async def webhook(
         if not current_node:
             return {"status": "error", "message": "Flow not loaded"}
 
-        # 在治療選項節點（11/12/13）支援展開完整衛教，不推進題號
-        if current_node_id in TREATMENT_NODE_SUMMARIES and is_expand_education_request(user_input):
-            title = current_node.get("tags", {}).get("action_tag", "治療選項")
-            full_education = current_node.get("education_text", "")
-            replies = [f"【完整衛教：{title}】\n{full_education}"]
-            prompt_text = current_node.get("prompt", "")
-            if prompt_text:
-                replies.append(prompt_text)
-            replies.append("請回覆「是」或「否」")
-            line_reply(reply_token, replies)
-            db.log_message(
-                user_id=user_id,
-                node_id=current_node_id,
-                symptom_code=current_node.get("tags", {}).get("code", ""),
-                action_tag=current_node.get("tags", {}).get("action_tag", ""),
-                user_input=user_input,
-                bot_reply="\n".join(replies),
-                prompt=current_node.get("prompt", ""),
-                education_text=current_node.get("education_text", ""),
-                intent="education_expand",
-                is_end=False,
-            )
-            continue
-        
         # 檢查是否為新用戶（從第一題開始，需要回答後才跳轉）
         # 如果 current_node_id 是 "1"，說明是問卷第一題，回答後需要跳轉
         is_first_question = current_node_id == "1"
@@ -499,15 +463,32 @@ async def webhook(
             
             if next_node:
                 if next_node_id in TREATMENT_NODE_SUMMARIES:
-                    replies = build_treatment_summary_reply(next_node)
+                    node_14 = flow.get_node("14")
+                    if node_14:
+                        replies = build_treatment_summary_reply(next_node) + flow.build_reply(node_14)
+                        next_node_id = "14"
+                        is_end = node_14.get("is_end", False)
+                        tags = node_14.get("tags", {})
+                        symptom_code = tags.get("code", "")
+                        action_tag = tags.get("action_tag", "")
+                        prompt = node_14.get("prompt", "")
+                        education = node_14.get("education_text", "")
+                    else:
+                        replies = build_treatment_summary_reply(next_node)
+                        is_end = False
+                        tags = next_node.get("tags", {})
+                        symptom_code = tags.get("code", "")
+                        action_tag = tags.get("action_tag", "")
+                        prompt = next_node.get("prompt", "")
+                        education = next_node.get("education_text", "")
                 else:
                     replies = flow.build_reply(next_node)
-                is_end = next_node.get("is_end", False)
-                tags = next_node.get("tags", {})
-                symptom_code = tags.get("code", "")
-                action_tag = tags.get("action_tag", "")
-                prompt = next_node.get("prompt", "")
-                education = next_node.get("education_text", "")
+                    is_end = next_node.get("is_end", False)
+                    tags = next_node.get("tags", {})
+                    symptom_code = tags.get("code", "")
+                    action_tag = tags.get("action_tag", "")
+                    prompt = next_node.get("prompt", "")
+                    education = next_node.get("education_text", "")
             else:
                 # 流程結束
                 replies = ["問卷已完成，感謝您的配合！\n\n【日常預防建議】\n1. 每日飲水 2000cc 以上\n2. 如廁後由前往後擦拭\n3. 性行為後立即排尿\n4. 避免憋尿\n\n如果您想了解更多關於泌尿道感染的衛教資訊，歡迎隨時詢問我喔！"]
@@ -524,15 +505,32 @@ async def webhook(
             
             if next_node:
                 if next_node_id in TREATMENT_NODE_SUMMARIES:
-                    replies = build_treatment_summary_reply(next_node)
+                    node_14 = flow.get_node("14")
+                    if node_14:
+                        replies = build_treatment_summary_reply(next_node) + flow.build_reply(node_14)
+                        next_node_id = "14"
+                        is_end = node_14.get("is_end", False)
+                        tags = node_14.get("tags", {})
+                        symptom_code = tags.get("code", "")
+                        action_tag = tags.get("action_tag", "")
+                        prompt = node_14.get("prompt", "")
+                        education = node_14.get("education_text", "")
+                    else:
+                        replies = build_treatment_summary_reply(next_node)
+                        is_end = False
+                        tags = next_node.get("tags", {})
+                        symptom_code = tags.get("code", "")
+                        action_tag = tags.get("action_tag", "")
+                        prompt = next_node.get("prompt", "")
+                        education = next_node.get("education_text", "")
                 else:
                     replies = flow.build_reply(next_node)
-                is_end = next_node.get("is_end", False)
-                tags = next_node.get("tags", {})
-                symptom_code = tags.get("code", "")
-                action_tag = tags.get("action_tag", "")
-                prompt = next_node.get("prompt", "")
-                education = next_node.get("education_text", "")
+                    is_end = next_node.get("is_end", False)
+                    tags = next_node.get("tags", {})
+                    symptom_code = tags.get("code", "")
+                    action_tag = tags.get("action_tag", "")
+                    prompt = next_node.get("prompt", "")
+                    education = next_node.get("education_text", "")
             else:
                 # 流程結束
                 replies = ["問卷已完成，感謝您的配合！\n\n【日常預防建議】\n1. 每日飲水 2000cc 以上\n2. 如廁後由前往後擦拭\n3. 性行為後立即排尿\n4. 避免憋尿\n\n如果您想了解更多關於泌尿道感染的衛教資訊，歡迎隨時詢問我喔！"]
