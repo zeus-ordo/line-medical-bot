@@ -183,13 +183,20 @@ class FlowEngine:
         
         # 2. 嘗試匹配選項 key（針對多選題）
         user_input_lower = user_input.strip().lower()
+        user_input_normalized = user_input_lower.replace(" ", "_")
         for key, next_node in transitions.items():
-            if user_input_lower == key.lower():
+            key_lower = key.lower()
+            key_normalized = key_lower.replace(" ", "_")
+            if user_input_lower == key_lower or user_input_normalized == key_normalized:
                 return next_node
         
         # 3. 模糊匹配選項文字
         for key, next_node in transitions.items():
-            if key.lower() in user_input_lower or user_input_lower in key.lower():
+            key_normalized = key.lower().replace(" ", "_")
+            if (
+                key_normalized in user_input_normalized
+                or user_input_normalized in key_normalized
+            ):
                 return next_node
         
         # 4. 無下一節點 = 結束

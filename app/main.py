@@ -41,6 +41,14 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 # 問卷觸發關鍵字
 SURVEY_KEYWORDS = ["泌尿道問題", "問卷", "評估", "我要評估"]
 
+# 進階治療節點（第 10 題選項）
+TREATMENT_NODE_SUMMARIES = {
+    "11": "此方案以改善泌尿生殖道黏膜健康為目標，常用於停經後、反覆感染風險較高族群。",
+    "12": "此方案由醫療人員於門診執行，重點是修復膀胱黏膜保護層並減少刺激症狀。",
+    "13": "此方案屬於非抗生素口服預防方向，臨床證據仍在累積，需由醫師評估適用性。",
+}
+EXPAND_EDUCATION_KEYWORDS = ["展開", "完整", "詳細", "全文", "更多"]
+
 # 醫療客服系統提示
 MEDICAL_SYSTEM_PROMPT = """你是泌尿科健康顧問，專門回答關於泌尿道感染的問題。
 請用溫和、專業的語氣回答。
@@ -136,6 +144,27 @@ def is_survey_keyword(text: str) -> bool:
         if keyword.lower() in text_lower:
             return True
     return False
+
+
+def is_expand_education_request(text: str) -> bool:
+    text_lower = text.strip().lower()
+    for keyword in EXPAND_EDUCATION_KEYWORDS:
+        if keyword in text_lower:
+            return True
+    return False
+
+
+def build_treatment_summary_reply(node: dict) -> list:
+    node_id = node.get("id", "")
+    title = node.get("tags", {}).get("action_tag", "治療選項")
+    summary = TREATMENT_NODE_SUMMARIES.get(node_id, "以下為該選項重點摘要。")
+    prompt = node.get("prompt", "")
+    return [
+        f"【{title}】\n{summary}",
+        "若要查看完整衛教內容，請回覆「展開完整內容」。",
+        prompt,
+        "請回覆「是」或「否」",
+    ]
 
 def line_reply(reply_token: str, messages: list) -> bool:
     """LINE Reply API（免費）"""
@@ -414,6 +443,30 @@ async def webhook(
         # 確保 current_node 存在
         if not current_node:
             return {"status": "error", "message": "Flow not loaded"}
+
+        # 在治療選項節點（11/12/13）支援展開完整衛教，不推進題號
+        if current_node_id in TREATMENT_NODE_SUMMARIES and is_expand_education_request(user_input):
+            title = current_node.get("tags", {}).get("action_tag", "治療選項")
+            full_education = current_node.get("education_text", "")
+            replies = [f"【完整衛教：{title}】\n{full_education}"]
+            prompt_text = current_node.get("prompt", "")
+            if prompt_text:
+                replies.append(prompt_text)
+            replies.append("請回覆「是」或「否」")
+            line_reply(reply_token, replies)
+            db.log_message(
+                user_id=user_id,
+                node_id=current_node_id,
+                symptom_code=current_node.get("tags", {}).get("code", ""),
+                action_tag=current_node.get("tags", {}).get("action_tag", ""),
+                user_input=user_input,
+                bot_reply="\n".join(replies),
+                prompt=current_node.get("prompt", ""),
+                education_text=current_node.get("education_text", ""),
+                intent="education_expand",
+                is_end=False,
+            )
+            continue
         
         # 檢查是否為新用戶（從第一題開始，需要回答後才跳轉）
         # 如果 current_node_id 是 "1"，說明是問卷第一題，回答後需要跳轉
@@ -445,7 +498,10 @@ async def webhook(
             next_node = flow.get_node(next_node_id) if next_node_id else None
             
             if next_node:
-                replies = flow.build_reply(next_node)
+                if next_node_id in TREATMENT_NODE_SUMMARIES:
+                    replies = build_treatment_summary_reply(next_node)
+                else:
+                    replies = flow.build_reply(next_node)
                 is_end = next_node.get("is_end", False)
                 tags = next_node.get("tags", {})
                 symptom_code = tags.get("code", "")
@@ -467,7 +523,10 @@ async def webhook(
             next_node = flow.get_node(next_node_id) if next_node_id else None
             
             if next_node:
-                replies = flow.build_reply(next_node)
+                if next_node_id in TREATMENT_NODE_SUMMARIES:
+                    replies = build_treatment_summary_reply(next_node)
+                else:
+                    replies = flow.build_reply(next_node)
                 is_end = next_node.get("is_end", False)
                 tags = next_node.get("tags", {})
                 symptom_code = tags.get("code", "")
