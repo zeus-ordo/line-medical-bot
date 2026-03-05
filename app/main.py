@@ -43,9 +43,9 @@ SURVEY_KEYWORDS = ["泌尿道問題", "問卷", "評估", "我要評估"]
 
 # 進階治療節點（第 10 題選項）
 TREATMENT_NODE_SUMMARIES = {
-    "11": "賀爾蒙相關衛教與治療 (Hormonal Therapy)\n這主要針對更年期或停經後女性。雌激素（Estrogen）在維持泌尿生殖系統的健康中扮演關鍵角色。\n• 機制：雌激素能維持陰道黏膜的厚度與濕潤，並促進乳酸桿菌（Lactobacillus）的生長，使陰道維持在弱酸性環境（pH 3.5-4.5）。當進入更年期雌激素下降，陰道環境會趨於中性，導致保護性益菌消失，腸道菌（如大腸桿菌）便容易在陰道定殖並逆行進入尿道造成感染。",
-    "12": "玻尿酸膀胱灌注 (HA Bladder Instillation)\n這是一種直接修補防護層的物理療法，常用於黏膜受損嚴重的患者。\n• 機制：膀胱內壁有一層由葡萄糖胺聚醣（GAG layer）構成的保護膜，負責阻隔尿液中的細菌與刺激物。反覆發炎會導致這層膜破損（如同牆壁掉漆）。此方法是將玻尿酸（Hyaluronic Acid, HA）或硫酸軟骨素，透過導尿管直接注入膀胱。",
-    "13": "口服黏膜修補藥物 (Oral GAG Layer Repair)\n這是近年最受矚目的非侵入性新技術。\n• 機制：其邏輯與膀胱灌注類似，但改為口服路徑。藥物活性成分經由人體代謝排泄至尿液中，當尿液儲存於膀胱時，有效成分會與受損的膀胱壁結合，自動進行葡萄糖胺聚醣（GAG layer）的重建。",
+    "11": "賀爾蒙相關衛教與治療 (Hormonal Therapy)",
+    "12": "玻尿酸膀胱灌注 (HA Bladder Instillation)",
+    "13": "口服黏膜修補藥物 (Oral GAG Layer Repair)",
 }
 
 # 醫療客服系統提示
@@ -147,10 +147,10 @@ def is_survey_keyword(text: str) -> bool:
 
 def build_treatment_summary_reply(node: dict) -> list:
     node_id = node.get("id", "")
-    title = node.get("tags", {}).get("action_tag", "治療選項")
-    summary = TREATMENT_NODE_SUMMARIES.get(node_id, "以下為該選項重點摘要。")
+    title = TREATMENT_NODE_SUMMARIES.get(node_id, node.get("tags", {}).get("action_tag", "治療選項"))
+    summary = node.get("education_text", "").strip()
     return [
-        f"【{title}｜重點摘要】\n{summary}",
+        f"【{title}】\n{summary}",
         "（以上為衛教資訊，實際治療請由醫師評估）\n接下來將繼續後續問卷。",
     ]
 
