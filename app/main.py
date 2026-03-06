@@ -449,33 +449,13 @@ async def webhook(
             next_node = flow.get_node(next_node_id) if next_node_id else None
             
             if next_node:
-                if next_node_id in TREATMENT_NODE_SUMMARIES:
-                    node_14 = flow.get_node("14")
-                    if node_14:
-                        replies = build_treatment_summary_reply(next_node) + flow.build_reply(node_14)
-                        next_node_id = "14"
-                        is_end = node_14.get("is_end", False)
-                        tags = node_14.get("tags", {})
-                        symptom_code = tags.get("code", "")
-                        action_tag = tags.get("action_tag", "")
-                        prompt = node_14.get("prompt", "")
-                        education = node_14.get("education_text", "")
-                    else:
-                        replies = build_treatment_summary_reply(next_node)
-                        is_end = False
-                        tags = next_node.get("tags", {})
-                        symptom_code = tags.get("code", "")
-                        action_tag = tags.get("action_tag", "")
-                        prompt = next_node.get("prompt", "")
-                        education = next_node.get("education_text", "")
-                else:
-                    replies = flow.build_reply(next_node)
-                    is_end = next_node.get("is_end", False)
-                    tags = next_node.get("tags", {})
-                    symptom_code = tags.get("code", "")
-                    action_tag = tags.get("action_tag", "")
-                    prompt = next_node.get("prompt", "")
-                    education = next_node.get("education_text", "")
+                replies = flow.build_reply(next_node)
+                is_end = next_node.get("is_end", False)
+                tags = next_node.get("tags", {})
+                symptom_code = tags.get("code", "")
+                action_tag = tags.get("action_tag", "")
+                prompt = next_node.get("prompt", "")
+                education = next_node.get("education_text", "")
             else:
                 # 流程結束
                 replies = ["問卷已完成，感謝您的配合！\n\n【日常預防建議】\n1. 每日飲水 2000cc 以上\n2. 如廁後由前往後擦拭\n3. 性行為後立即排尿\n4. 避免憋尿\n\n如果您想了解更多關於泌尿道感染的衛教資訊，歡迎隨時詢問我喔！"]
@@ -491,33 +471,13 @@ async def webhook(
             next_node = flow.get_node(next_node_id) if next_node_id else None
             
             if next_node:
-                if next_node_id in TREATMENT_NODE_SUMMARIES:
-                    node_14 = flow.get_node("14")
-                    if node_14:
-                        replies = build_treatment_summary_reply(next_node) + flow.build_reply(node_14)
-                        next_node_id = "14"
-                        is_end = node_14.get("is_end", False)
-                        tags = node_14.get("tags", {})
-                        symptom_code = tags.get("code", "")
-                        action_tag = tags.get("action_tag", "")
-                        prompt = node_14.get("prompt", "")
-                        education = node_14.get("education_text", "")
-                    else:
-                        replies = build_treatment_summary_reply(next_node)
-                        is_end = False
-                        tags = next_node.get("tags", {})
-                        symptom_code = tags.get("code", "")
-                        action_tag = tags.get("action_tag", "")
-                        prompt = next_node.get("prompt", "")
-                        education = next_node.get("education_text", "")
-                else:
-                    replies = flow.build_reply(next_node)
-                    is_end = next_node.get("is_end", False)
-                    tags = next_node.get("tags", {})
-                    symptom_code = tags.get("code", "")
-                    action_tag = tags.get("action_tag", "")
-                    prompt = next_node.get("prompt", "")
-                    education = next_node.get("education_text", "")
+                replies = flow.build_reply(next_node)
+                is_end = next_node.get("is_end", False)
+                tags = next_node.get("tags", {})
+                symptom_code = tags.get("code", "")
+                action_tag = tags.get("action_tag", "")
+                prompt = next_node.get("prompt", "")
+                education = next_node.get("education_text", "")
             else:
                 # 流程結束
                 replies = ["問卷已完成，感謝您的配合！\n\n【日常預防建議】\n1. 每日飲水 2000cc 以上\n2. 如廁後由前往後擦拭\n3. 性行為後立即排尿\n4. 避免憋尿\n\n如果您想了解更多關於泌尿道感染的衛教資訊，歡迎隨時詢問我喔！"]
