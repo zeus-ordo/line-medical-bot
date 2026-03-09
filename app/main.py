@@ -296,7 +296,7 @@ async def webhook(
             db.reset_user(user_id, "1")
             current_node_id = "1"
             current_node = flow.get_node(current_node_id)
-            replies = flow.build_reply(current_node)
+            replies = flow.build_reply(current_node) if current_node else ["問卷載入中，請再試一次。"]
             line_reply(reply_token, replies)
             db.log_message(
                 user_id=user_id,
@@ -444,13 +444,25 @@ async def webhook(
                 prompt = next_node.get("prompt", "")
                 education = next_node.get("education_text", "")
             else:
-                # 流程結束
-                replies = ["問卷已完成，感謝您的配合！\n\n【日常預防建議】\n1. 每日飲水 2000cc 以上\n2. 如廁後由前往後擦拭\n3. 性行為後立即排尿\n4. 避免憋尿\n\n如果您想了解更多關於泌尿道感染的衛教資訊，歡迎隨時詢問我喔！"]
-                is_end = True
-                symptom_code = ""
-                action_tag = ""
-                prompt = ""
-                education = ""
+                transitions = current_node.get("transitions", {}) if current_node else {}
+                if transitions:
+                    # 有分支但未匹配到：不結束，重送當前題目避免卡住
+                    retries = flow.build_reply(current_node) if current_node else ["請重新作答"]
+                    replies = ["我沒有辨識到您的選項，請依提示作答。"] + retries
+                    is_end = False
+                    symptom_code = current_node.get("tags", {}).get("code", "") if current_node else ""
+                    action_tag = current_node.get("tags", {}).get("action_tag", "") if current_node else ""
+                    prompt = current_node.get("prompt", "") if current_node else ""
+                    education = current_node.get("education_text", "") if current_node else ""
+                    next_node_id = current_node_id
+                else:
+                    # 流程結束
+                    replies = ["問卷已完成，感謝您的配合！\n\n【日常預防建議】\n1. 每日飲水 2000cc 以上\n2. 如廁後由前往後擦拭\n3. 性行為後立即排尿\n4. 避免憋尿\n\n如果您想了解更多關於泌尿道感染的衛教資訊，歡迎隨時詢問我喔！"]
+                    is_end = True
+                    symptom_code = ""
+                    action_tag = ""
+                    prompt = ""
+                    education = ""
         else:
             # 非第一題：根據回答跳到下一題
             intent = intent_classifier.classify(user_input, current_node)
@@ -466,13 +478,25 @@ async def webhook(
                 prompt = next_node.get("prompt", "")
                 education = next_node.get("education_text", "")
             else:
-                # 流程結束
-                replies = ["問卷已完成，感謝您的配合！\n\n【日常預防建議】\n1. 每日飲水 2000cc 以上\n2. 如廁後由前往後擦拭\n3. 性行為後立即排尿\n4. 避免憋尿\n\n如果您想了解更多關於泌尿道感染的衛教資訊，歡迎隨時詢問我喔！"]
-                is_end = True
-                symptom_code = ""
-                action_tag = ""
-                prompt = ""
-                education = ""
+                transitions = current_node.get("transitions", {}) if current_node else {}
+                if transitions:
+                    # 有分支但未匹配到：不結束，重送當前題目避免卡住
+                    retries = flow.build_reply(current_node) if current_node else ["請重新作答"]
+                    replies = ["我沒有辨識到您的選項，請依提示作答。"] + retries
+                    is_end = False
+                    symptom_code = current_node.get("tags", {}).get("code", "") if current_node else ""
+                    action_tag = current_node.get("tags", {}).get("action_tag", "") if current_node else ""
+                    prompt = current_node.get("prompt", "") if current_node else ""
+                    education = current_node.get("education_text", "") if current_node else ""
+                    next_node_id = current_node_id
+                else:
+                    # 流程結束
+                    replies = ["問卷已完成，感謝您的配合！\n\n【日常預防建議】\n1. 每日飲水 2000cc 以上\n2. 如廁後由前往後擦拭\n3. 性行為後立即排尿\n4. 避免憋尿\n\n如果您想了解更多關於泌尿道感染的衛教資訊，歡迎隨時詢問我喔！"]
+                    is_end = True
+                    symptom_code = ""
+                    action_tag = ""
+                    prompt = ""
+                    education = ""
         
         # 5. 記錄完整對話資訊（含症狀代碼、行動方向）
         db.log_message(
