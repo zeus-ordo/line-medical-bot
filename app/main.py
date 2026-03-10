@@ -314,6 +314,11 @@ async def webhook(
         
         # ===== 取得用戶當前狀態 =====
         current_node_id = db.get_user_state(user_id)
+
+        # 兼容舊狀態：若停在結束節點，直接切到 COMPLETED 進入機器人回答
+        if current_node_id in {"99", "END"}:
+            db.update_user_state(user_id, "COMPLETED")
+            current_node_id = "COMPLETED"
         
         # ===== 如果用戶狀態為 "0"（剛加入好友），強制進入問卷 =====
         if current_node_id == "0":
