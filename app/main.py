@@ -55,85 +55,35 @@ MEDICAL_SYSTEM_PROMPT = """你是泌尿科健康顧問，專門回答關於泌�
 如果不知道答案，建議他們就醫。"""
 
 def llm_chat(user_input: str) -> Optional[str]:
-    """使用 OpenAI API 回覆用戶問題"""
-    print(f"[DEBUG] OPENAI_API_KEY present: {bool(OPENAI_API_KEY)}")
-    print(f"[DEBUG] Key length: {len(OPENAI_API_KEY) if OPENAI_API_KEY else 0}")
-    
+    """使用 OpenAI Chat Completions REST API 回覆用戶問題"""
     if not OPENAI_API_KEY:
         print("[DEBUG] No OpenAI API key configured")
         return None
-    
+
+    url = "https://api.openai.com/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {"role": "system", "content": MEDICAL_SYSTEM_PROMPT},
+            {"role": "user", "content": user_input},
+        ],
+        "max_tokens": 500,
+        "temperature": 0.7,
+    }
+
     try:
-        # 清除可能造成問題的 proxy 環境變數
-        import os
-        for key in ['http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY']:
-            if key in os.environ:
-                del os.environ[key]
-        
-        from openai import OpenAI
-        client = OpenAI(api_key=OPENAI_API_KEY)
-        
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": MEDICAL_SYSTEM_PROMPT},
-                {"role": "user", "content": user_input}
-            ],
-            max_tokens=500,
-            temperature=0.7
-        )
-        print(f"[DEBUG] LLM response success")
-        return response.choices[0].message.content
+        resp = requests.post(url, headers=headers, json=payload, timeout=20)
+        if resp.status_code != 200:
+            print(f"[DEBUG] LLM HTTP error: {resp.status_code} {resp.text[:300]}")
+            return None
+        data = resp.json()
+        return data.get("choices", [{}])[0].get("message", {}).get("content")
     except Exception as e:
         print(f"[DEBUG] LLM Chat Error: {e}")
-        return None
-    """使用 OpenAI API 回覆用戶問題"""
-    print(f"[DEBUG] OPENAI_API_KEY present: {bool(OPENAI_API_KEY)}")
-    print(f"[DEBUG] Key length: {len(OPENAI_API_KEY) if OPENAI_API_KEY else 0}")
-    
-    if not OPENAI_API_KEY:
-        print("[DEBUG] No OpenAI API key configured")
-        return None
-    
-    try:
-        from openai import OpenAI
-        client = OpenAI(api_key=OPENAI_API_KEY)
-        
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": MEDICAL_SYSTEM_PROMPT},
-                {"role": "user", "content": user_input}
-            ],
-            max_tokens=500,
-            temperature=0.7
-        )
-        print(f"[DEBUG] LLM response success")
-        return response.choices[0].message.content
-    except Exception as e:
-        print(f"[DEBUG] LLM Chat Error: {e}")
-        return None
-    """使用 OpenAI API 回覆用戶問題"""
-    if not OPENAI_API_KEY:
-        print("No OpenAI API key configured")
-        return None
-    
-    try:
-        from openai import OpenAI
-        client = OpenAI(api_key=OPENAI_API_KEY)
-        
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": MEDICAL_SYSTEM_PROMPT},
-                {"role": "user", "content": user_input}
-            ],
-            max_tokens=500,
-            temperature=0.7
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        print(f"LLM Chat Error: {e}")
         return None
 
 def is_survey_keyword(text: str) -> bool:
