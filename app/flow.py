@@ -250,8 +250,9 @@ class FlowEngine:
         transitions = node.get("transitions", {})
         if transitions:
             if "yes" in transitions and "no" in transitions:
-                # 是/否題
-                messages.append("請回覆「是」或「否」")
+                # 是/否題（編號）
+                messages.append("請選擇：\n1. 是\n2. 否")
+                messages.append("請直接回覆數字（例如：1）")
             elif len(transitions) > 0:
                 # 多選題
                 option_lines = []

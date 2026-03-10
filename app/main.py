@@ -319,6 +319,12 @@ async def webhook(
         if current_node_id in {"99", "END"}:
             db.update_user_state(user_id, "COMPLETED")
             current_node_id = "COMPLETED"
+
+        # 兼容舊流程資料：若當前節點本身就是結束節點，也直接切 COMPLETED
+        legacy_node = flow.get_node(current_node_id)
+        if legacy_node and legacy_node.get("is_end", False) and current_node_id != "COMPLETED":
+            db.update_user_state(user_id, "COMPLETED")
+            current_node_id = "COMPLETED"
         
         # ===== 如果用戶狀態為 "0"（剛加入好友），強制進入問卷 =====
         if current_node_id == "0":
@@ -378,41 +384,7 @@ async def webhook(
                     is_end=False
                 )
             continue
-        if current_node_id == "COMPLETED":
-            # 先搜尋知識庫
-            kb_response = knowledge_base.search(user_input)
-            if kb_response:
-                line_reply(reply_token, [kb_response])
-                db.log_message(
-                    user_id=user_id,
-                    node_id="COMPLETED",
-                    symptom_code="",
-                    action_tag="",
-                    user_input=user_input,
-                    bot_reply=kb_response,
-                    prompt="",
-                    education_text="",
-                    intent="kb_match",
-                    is_end=False
-                )
-                continue
-            # 知識庫沒匹配，使用 LLM
-            llm_response = llm_chat(user_input)
-            if llm_response:
-                line_reply(reply_token, [llm_response])
-                db.log_message(
-                    user_id=user_id,
-                    node_id="COMPLETED",
-                    symptom_code="",
-                    action_tag="",
-                    user_input=user_input,
-                    bot_reply=llm_response,
-                    prompt="",
-                    education_text="",
-                    intent="llm_chat",
-                    is_end=False
-                )
-            continue
+        
         
         # ===== 問診流程處理 =====
         
