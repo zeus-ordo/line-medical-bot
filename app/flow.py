@@ -120,13 +120,13 @@ class FlowEngine:
                 parts = item.split("|", 1)
                 label = parts[0].strip()
                 next_node = parts[1].strip() if len(parts) > 1 else ""
-                key = label.lower().replace(" ", "_")
+                key = label
                 choice = {"label": label, "key": key}
                 if next_node:
                     choice["next"] = next_node
                 choices.append(choice)
             else:
-                choices.append({"label": item, "key": item.lower().replace(" ", "_")})
+                choices.append({"label": item, "key": item})
         
         return choices
     
