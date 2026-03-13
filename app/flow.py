@@ -173,6 +173,9 @@ class FlowEngine:
             if re.search(r'(否|不|不要|不行|沒有|no|nope|nah)', user_lower):
                 if "no" in transitions:
                     return transitions["no"]
+            if re.search(r'(不知道|不確定|不清楚|其他)', user_lower):
+                if "不知道" in transitions:
+                    return transitions["不知道"]
 
         # 1.7. 數字選項（1/2/3）依 transitions 順序對應
         if intent.isdigit():
@@ -249,7 +252,7 @@ class FlowEngine:
         # 選項提示（如果有分支）
         transitions = node.get("transitions", {})
         if transitions:
-            if "yes" in transitions and "no" in transitions:
+            if set(transitions.keys()) == {"yes", "no"}:
                 # 是/否題（編號）
                 messages.append("請選擇：\n1. 是\n2. 否")
                 messages.append("請直接回覆數字（例如：1）")
@@ -257,7 +260,12 @@ class FlowEngine:
                 # 多選題
                 option_lines = []
                 for idx, key in enumerate(transitions.keys(), start=1):
-                    label = key.replace("_", " ")
+                    if key == "yes":
+                        label = "是"
+                    elif key == "no":
+                        label = "否"
+                    else:
+                        label = key.replace("_", " ")
                     option_lines.append(f"{idx}. {label}")
                 messages.append("請選擇：\n" + "\n".join(option_lines))
                 messages.append("請直接回覆數字（例如：1）")

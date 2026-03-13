@@ -199,26 +199,24 @@ async def webhook(
             reply_token = event.get("replyToken", "")
             if user_id and reply_token:
                 welcome_node = flow.get_node("0")
-                first_node = flow.get_node("1")
-                if welcome_node and first_node:
+                if welcome_node:
                     welcome_text = welcome_node.get("prompt", "")
-                    first_question = first_node.get("prompt", "")
-                    replies = [welcome_text, first_question, "請回覆「是」或「否」"]
+                    replies = flow.build_reply(welcome_node)
                     line_reply(reply_token, replies)
                     db.log_message(
                         user_id=user_id,
-                        node_id="1",
-                        symptom_code=first_node.get("tags", {}).get("code", ""),
-                        action_tag=first_node.get("tags", {}).get("action_tag", ""),
+                        node_id="0",
+                        symptom_code=welcome_node.get("tags", {}).get("code", ""),
+                        action_tag=welcome_node.get("tags", {}).get("action_tag", ""),
                         user_input="[加入好友]",
                         bot_reply="\n".join(replies),
-                        prompt=first_question,
-                        education_text=first_node.get("education_text", ""),
-                        intent="welcome_with_q1",
+                        prompt=welcome_text,
+                        education_text=welcome_node.get("education_text", ""),
+                        intent="welcome",
                         is_end=False
                     )
-                    # 直接設定到第一題，讓用戶下一句可直接作答
-                    db.update_user_state(user_id, "1")
+                    # 設定到第 0 題，讓用戶下一句可以回答第 0 題
+                    db.update_user_state(user_id, "0")
     
     for event in data.get("events", []):
         if event.get("type") != "message":
@@ -242,9 +240,9 @@ async def webhook(
         
         # ===== 檢查是否為關鍵字觸發問卷 =====
         if is_survey_keyword(user_input):
-            # 重置用戶狀態到第一題
-            db.reset_user(user_id, "1")
-            current_node_id = "1"
+            # 重置用戶狀態到第0題
+            db.reset_user(user_id, "0")
+            current_node_id = "0"
             current_node = flow.get_node(current_node_id)
             replies = flow.build_reply(current_node) if current_node else ["問卷載入中，請再試一次。"]
             line_reply(reply_token, replies)
@@ -276,11 +274,7 @@ async def webhook(
             db.update_user_state(user_id, "COMPLETED")
             current_node_id = "COMPLETED"
         
-        # ===== 如果用戶狀態為 "0"（剛加入好友），強制進入問卷 =====
-        if current_node_id == "0":
-            # 兼容舊狀態：改為第一題，並把本次輸入當作第一題回答
-            db.reset_user(user_id, "1")
-            current_node_id = "1"
+        # current_node_id == "0" 視為正常問卷第一個問題，不再強制跳題
         
         # ===== 如果用戶已完成問卷，使用 LLM 回覆 =====
         if current_node_id == "COMPLETED":
