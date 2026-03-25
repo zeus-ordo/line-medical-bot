@@ -222,6 +222,10 @@ async def webhook(
         if event.get("type") != "message":
             continue
         if event.get("message", {}).get("type") != "text":
+            # 非文字訊息（圖片、貼圖等）回覆友善提示
+            reply_token = event.get("replyToken", "")
+            if reply_token:
+                line_reply(reply_token, ["抱歉，我只支援文字訊息回覆。圖片或其他格式暫時無法處理，請傳送文字給我喔！"])
             continue
         
         # 安全獲取用戶資訊
